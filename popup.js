@@ -133,6 +133,3 @@ class PopupController {
 document.addEventListener('DOMContentLoaded', () => {
   new PopupController();
 });
-
-
-# 123
