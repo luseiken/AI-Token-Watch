@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:gemini.google.com)",
+      "WebFetch(domain:claude.ai)",
+      "WebFetch(domain:x.com)",
+      "WebFetch(domain:grok.com)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
