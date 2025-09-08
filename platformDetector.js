@@ -57,9 +57,9 @@ class PlatformDetector {
         urlPatterns: ['/i/grok', 'grok.com'],
         enabled: true,
         selectors: {
-          primary: '[data-testid*="cellInnerDiv"], [data-testid*="conversation"], [data-testid*="grok"], .r-1habvwh, .r-16y2uox',
+          primary: '.not-prose, [data-testid*="cellInnerDiv"], [data-testid*="conversation"], [data-testid*="grok"], .r-1habvwh, .r-16y2uox',
           fallback: ['[role="article"]', '[data-testid="tweet"]', '.css-1dbjc4n > div', '[class*="r-"]', 'div[dir="auto"]'],
-          content: '[data-testid="tweetText"], .css-901oao, [dir="auto"], .r-37j5jr, .r-16dba41, .r-bnwqim, .r-1q142lx',
+          content: '.not-prose, [data-testid="tweetText"], .css-901oao, [dir="auto"], .r-37j5jr, .r-16dba41, .r-bnwqim, .r-1q142lx',
           userRole: 'user', 
           assistantRole: 'assistant'
         },

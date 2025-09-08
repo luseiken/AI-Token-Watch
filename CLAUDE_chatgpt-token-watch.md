@@ -614,3 +614,59 @@ ChatGPT Token Watch 現在是一個**真正跨平台相容**的專業工具，�
 ---
 *最後更新：2025-09-08*
 *開發者：Claude Code 協作完成*
+ 
+---
+
+## 2025-09-09 工作記錄 - 暫停 Claude + 修復 Gemini/Grok 計數
+
+### ✅ 今天完成的工作
+
+#### 1. 暫停 Claude 監控（保留未來擴充）
+- `platformDetector.js`: 對 Claude 設定 `enabled: false`
+- `content.js`: 若平台 `enabled === false`，不建立 HUD、不顯示 debug，乾淨早退
+
+#### 2. Gemini/Grok 計數修復與強化
+- 放寬角色限制：`role === unknown` 但內容充足時，推論為 `assistant` 以納入計數（避免 0）
+- 平台提示（heuristics）：
+  - Gemini：`response-container` → 視為 assistant
+  - Grok：`.not-prose` → 視為 assistant；缺特徵時使用交替（user/assistant）降級
+- 去重（de-dup）：同一內容只計一次（解決 Gemini 多容器重複）
+- 非文字節點過濾：忽略 `svg/script/style/img/button` 等無文本元素
+- Grok 選擇器優化：優先 `.not-prose`，降低掃描雜訊
+
+#### 3. 初始化與路由穩定性
+- `TokenEstimator` 支援 lazy init；`content.js` 在初始化與 SPA 路由變更時重新初始化估算平台
+
+### 📌 實際影響
+- Grok：總 tokens 可能比過去更低（因去重與雜訊過濾），更接近真實值
+- Gemini：計數恢復正常；因 DOM 結構，角色顯示多偏向 assistant（不影響總量）
+- ChatGPT：行為不變
+- Claude：預設停用，不顯示 HUD
+
+### ⚠️ 已知限制
+- Claude：DOM 變動頻繁，角色檢測不穩定 → 暫列 Experimental/Paused
+- 設定即時套用：目前只對 ChatGPT 即時廣播；Gemini/Grok 調整「Include code」後需重整頁面
+- 程式碼計數：預設計入；關閉後以標記/樣式過濾，但若平台用純樣式代碼區，可能仍有殘留
+
+### 🛠 技術細節
+- platformDetector：
+  - Claude `enabled: false`
+  - Grok primary/content 加入 `.not-prose`
+- tokenEstimator：
+  - lazy init + 路由 re-init
+  - 內容充分但 `role=unknown` → 推論為 `assistant` 計數
+  - Gemini: `response-container` → assistant
+  - Grok: `.not-prose` → assistant；交替降級
+  - 去重：以內容正規化雜湊判斷
+  - 預過濾：排除非文本節點、極短內容
+
+### 📋 下一步計劃
+1. Grok：視需求放寬「極短訊息」過濾（1–4 字）
+2. 設定傳播：在 popup 廣播設定到 Gemini/Grok，免重整
+3. 角色精準度：強化 Gemini/Grok 的 user 偵測與去重策略
+
+---
+
+## 版本里程碑更新
+- [x] v2.0.0 多平台通用版發布 (2025-09-08)
+- [x] 2025-09-09 更新：暫停 Claude + 修復 Gemini/Grok 計數（小幅強化，未變更 manifest 版本）

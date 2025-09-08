@@ -79,6 +79,7 @@ class TokenEstimator {
 
   estimateFromDOM(includeCode = true) {
     const messages = [];
+    const seen = new Set(); // de-dup messages within a pass
     
     // Lazy init or recover from early init when platform was UNKNOWN
     if (!this.currentPlatformConfig) {
@@ -100,8 +101,14 @@ class TokenEstimator {
     for (const element of primaryElements) {
       const message = this.extractMessageFromElement(element);
       if (message) {
-        messages.push(message);
-        console.log(`[TokenEstimator] Extracted message: ${message.role} - ${message.content.substring(0, 100)}...`);
+        const key = this.normalizeForDedup(message);
+        if (!seen.has(key)) {
+          seen.add(key);
+          messages.push(message);
+          console.log(`[TokenEstimator] Extracted message: ${message.role} - ${message.content.substring(0, 100)}...`);
+        } else {
+          console.log('[TokenEstimator] Skipped duplicate message');
+        }
       } else {
         console.log(`[TokenEstimator] Failed to extract message from element:`, element.tagName, element.className);
       }
@@ -118,8 +125,12 @@ class TokenEstimator {
         for (const element of fallbackElements) {
           const message = this.extractMessageFromElement(element);
           if (message) {
-            messages.push(message);
-            console.log(`[TokenEstimator] Extracted fallback message: ${message.role} - ${message.content.substring(0, 50)}...`);
+            const key = this.normalizeForDedup(message);
+            if (!seen.has(key)) {
+              seen.add(key);
+              messages.push(message);
+              console.log(`[TokenEstimator] Extracted fallback message: ${message.role} - ${message.content.substring(0, 50)}...`);
+            }
           }
         }
         if (messages.length > 0) {
@@ -140,6 +151,17 @@ class TokenEstimator {
 
   extractMessageFromElement(element) {
     if (!element || !this.currentPlatformConfig) return null;
+
+    // Generic pre-filters to avoid non-textual or irrelevant nodes
+    const tag = (element.tagName || '').toLowerCase();
+    if (['svg', 'path', 'script', 'style', 'img', 'button', 'input', 'textarea'].includes(tag)) {
+      return null;
+    }
+    const quickText = (element.innerText || element.textContent || '').trim();
+    if (quickText.length < 5) {
+      // Too short to be a substantive message; skip early
+      return null;
+    }
 
     // Pre-filter: Skip obvious UI elements (Claude-specific)
     if (this.currentPlatformConfig.name === 'Claude') {
@@ -260,6 +282,11 @@ class TokenEstimator {
 
     console.log(`[TokenEstimator] Content validation failed - content length: ${content.length}, role: ${role}`);
     return null;
+  }
+
+  normalizeForDedup(message) {
+    const text = (message.content || '').replace(/\s+/g, ' ').trim();
+    return `${message.role || 'any'}::${text}`;
   }
 
   determineMessageRole(element) {
