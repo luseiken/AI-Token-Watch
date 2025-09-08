@@ -80,9 +80,14 @@ class TokenEstimator {
   estimateFromDOM(includeCode = true) {
     const messages = [];
     
+    // Lazy init or recover from early init when platform was UNKNOWN
     if (!this.currentPlatformConfig) {
-      console.warn('[TokenEstimator] No platform configuration available');
-      return 0;
+      console.warn('[TokenEstimator] No platform configuration available, attempting to initialize now');
+      this.initializePlatform();
+      if (!this.currentPlatformConfig) {
+        console.warn('[TokenEstimator] Still no platform configuration, returning 0 tokens');
+        return 0;
+      }
     }
 
     console.log(`[TokenEstimator] Analyzing DOM for ${this.currentPlatformConfig.name}`);
@@ -238,17 +243,21 @@ class TokenEstimator {
     }
     
     console.log(`[TokenEstimator] Final content extraction - Role: ${role}, Content length: ${content.length}, First 100 chars: ${content.substring(0, 100)}`);
-    
-    // Validate content quality and role
-    if (content.trim() && content.length > 10 && role && role !== 'unknown') {
-      const result = {
-        role: role,
-        content: content.trim()
-      };
-      console.log(`[TokenEstimator] Returning valid message with role: ${result.role}`);
+
+    // Relaxed validation: if role is unknown but content is substantial, infer a safe default
+    let finalRole = role;
+    if ((!finalRole || finalRole === 'unknown') && content && content.trim().length > 10) {
+      finalRole = this.inferDefaultRoleForCounting(element, content) || this.currentPlatformConfig.assistantRole || 'assistant';
+      console.log(`[TokenEstimator] Role was unknown; inferred default role for counting: ${finalRole}`);
+    }
+
+    // Validate content quality and accept with inferred role
+    if (content && content.trim().length > 10 && finalRole) {
+      const result = { role: finalRole, content: content.trim() };
+      console.log(`[TokenEstimator] Returning message with role: ${result.role}`);
       return result;
     }
-    
+
     console.log(`[TokenEstimator] Content validation failed - content length: ${content.length}, role: ${role}`);
     return null;
   }
@@ -408,20 +417,32 @@ class TokenEstimator {
         if (element.classList.contains('model-message') || element.getAttribute('data-testid')?.includes('model')) {
           return config.assistantRole;
         }
+        // Heuristic: Gemini often wraps model output in response-container
+        const gClass = (element.className || '').toString();
+        if (gClass.includes('response-container')) {
+          return config.assistantRole;
+        }
+        // Heuristic: user input/prompt containers
+        if (gClass.includes('query-input') || gClass.includes('prompt') || gClass.includes('user-query')) {
+          return config.userRole;
+        }
         break;
         
       case 'grok':
-        // Grok detection logic - uses Twitter/X DOM patterns
+        // Grok detection logic - supports grok.com and X.com
         const grokTestId = element.getAttribute('data-testid') || '';
-        
+        const grokClass = (element.className || '').toString();
+
+        // New: grok.com rich text blocks often have not-prose class
+        if (grokClass.includes('not-prose') || element.closest('.not-prose')) {
+          return config.assistantRole;
+        }
+
         // Look for X/Twitter specific patterns
         if (grokTestId.includes('tweet') || grokTestId.includes('cellInnerDiv')) {
-          // Check if this is user input or Grok response
-          // User messages might have different styling or position
           const hasGrokIndicator = element.querySelector('[data-testid*="grok"]') ||
                                   element.textContent?.includes('@grok') ||
                                   element.closest('[aria-label*="Grok"]');
-          
           return hasGrokIndicator ? config.assistantRole : config.userRole;
         }
         
@@ -432,10 +453,45 @@ class TokenEstimator {
         if (grokTestId.includes('grok') || element.closest('[data-testid*="grok"]')) {
           return config.assistantRole;
         }
+
+        // Alternation fallback for substantial messages on Grok pages
+        try {
+          const allMessages = document.querySelectorAll(this.currentPlatformConfig.selectors.primary);
+          const substantial = Array.from(allMessages).filter(el => (el.textContent || '').trim().length > 20);
+          const idx = substantial.indexOf(element);
+          if (idx >= 0) {
+            return idx % 2 === 0 ? config.userRole : config.assistantRole;
+          }
+        } catch (e) {
+          // ignore
+        }
         break;
     }
     
     return 'unknown';
+  }
+
+  // When role is unknown but content is substantial, infer a safe default role for counting tokens
+  inferDefaultRoleForCounting(element, content) {
+    if (!this.currentPlatformConfig) return null;
+    const platformName = (this.currentPlatformConfig.name || '').toLowerCase();
+
+    if (platformName.includes('gemini')) {
+      const cls = (element.className || '').toString();
+      if (cls.includes('response-container') || element.querySelector('.model-response-text, .formatted-text')) {
+        return this.currentPlatformConfig.assistantRole;
+      }
+    }
+
+    if (platformName.includes('grok')) {
+      const cls = (element.className || '').toString();
+      if (cls.includes('not-prose') || element.closest('.not-prose')) {
+        return this.currentPlatformConfig.assistantRole;
+      }
+    }
+
+    // Default to assistantRole as counting does not depend on role kind
+    return this.currentPlatformConfig.assistantRole || 'assistant';
   }
 
   // Get platform-specific token limit

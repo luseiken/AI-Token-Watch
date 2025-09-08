@@ -25,14 +25,17 @@ class AITokenWatch {
     const platformInfo = this.platformDetector.getCurrentPlatformConfig();
     console.log('[AITokenWatch] Platform detection result:', platformInfo);
     
-    // Create debug HUD for unsupported platforms only
+    // Handle unsupported or disabled platforms
     if (!platformInfo.isSupported) {
+      const isKnownDisabled = platformInfo?.config && platformInfo.config.enabled === false;
+      if (isKnownDisabled) {
+        // Known platform is explicitly disabled: do not show HUD/debug, exit quietly
+        console.warn(`[AITokenWatch] ${platformInfo.config?.name || platformInfo.platform} monitoring is disabled. Skipping initialization.`);
+        return;
+      }
+      // Unknown platforms: show debug HUD to assist troubleshooting
       console.log('[AITokenWatch] Creating debug HUD for unsupported platform');
       this.createDebugHUD(platformInfo);
-    }
-    
-    // Check if current platform is supported
-    if (!platformInfo.isSupported) {
       console.log('[AITokenWatch] Current platform not supported, showing debug only');
       console.log('[AITokenWatch] Debug info:', this.platformDetector.getDebugInfo());
       return;
@@ -40,6 +43,12 @@ class AITokenWatch {
 
     // Update maxTokens based on platform
     this.settings.maxTokens = this.tokenEstimator.getTokenLimit();
+    // Ensure TokenEstimator picks up the final platform (constructor may have run too early)
+    try {
+      this.tokenEstimator.initializePlatform();
+    } catch (e) {
+      console.warn('[AITokenWatch] Re-initialize TokenEstimator failed, will rely on lazy init in estimator.', e);
+    }
     
     await this.loadSettings();
     this.createHUD();
@@ -542,6 +551,12 @@ Check console for detailed debug info.
       setTimeout(() => {
         this.currentTokens = 0;
         this.updateHUD();
+        // Re-evaluate platform on SPA route changes
+        try {
+          this.tokenEstimator.initializePlatform();
+        } catch (e) {
+          console.warn('[AITokenWatch] Route change re-init TokenEstimator failed', e);
+        }
         this.startMonitoring();
       }, 1000);
     }

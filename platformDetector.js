@@ -11,6 +11,7 @@ class PlatformDetector {
     this.platformConfigs = {
       [this.platforms.CHATGPT]: {
         domains: ['chat.openai.com', 'chatgpt.com'],
+        enabled: true,
         selectors: {
           primary: '[data-message-author-role]',
           fallback: ['.group\\/conversation-turn', '[data-testid*="conversation"]'],
@@ -24,6 +25,8 @@ class PlatformDetector {
 
       [this.platforms.CLAUDE]: {
         domains: ['claude.ai'],
+        // Temporarily disabled due to unstable DOM; keep config for future use
+        enabled: false,
         selectors: {
           primary: 'div[data-is-streaming="true"], div[data-is-streaming="false"], div[data-testid="conversation-turn"], div[class*="font-user-message"], div[class*="font-claude-message"], [role="article"][data-testid]',
           fallback: ['div[class*="font-user"], div[class*="font-claude"], div[data-testid*="user"], div[data-testid*="assistant"], div[data-testid*="human"], .prose', 'div[class*="group"] > div[class*="relative"]', 'div[class*="flex"] > div[class*="max-w"]'],
@@ -37,6 +40,7 @@ class PlatformDetector {
 
       [this.platforms.GEMINI]: {
         domains: ['gemini.google.com', 'bard.google.com'],
+        enabled: true,
         selectors: {
           primary: '[data-testid*="message"], .conversation-turn, .response-container, .query-input',
           fallback: ['[class*="message-container"]', '[role="presentation"]', '[class*="conversation"]', '[class*="response"]'],
@@ -51,6 +55,7 @@ class PlatformDetector {
       [this.platforms.GROK]: {
         domains: ['grok.com', 'x.com', 'twitter.com'],
         urlPatterns: ['/i/grok', 'grok.com'],
+        enabled: true,
         selectors: {
           primary: '[data-testid*="cellInnerDiv"], [data-testid*="conversation"], [data-testid*="grok"], .r-1habvwh, .r-16y2uox',
           fallback: ['[role="article"]', '[data-testid="tweet"]', '.css-1dbjc4n > div', '[class*="r-"]', 'div[dir="auto"]'],
@@ -129,10 +134,13 @@ class PlatformDetector {
 
   getCurrentPlatformConfig() {
     const platform = this.detectCurrentPlatform();
+    const config = this.platformConfigs[platform] || null;
+    const isEnabled = config ? config.enabled !== false : false;
     return {
       platform,
-      config: this.platformConfigs[platform] || null,
-      isSupported: platform !== this.platforms.UNKNOWN
+      config,
+      isSupported: platform !== this.platforms.UNKNOWN && isEnabled,
+      isEnabled
     };
   }
 
