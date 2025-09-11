@@ -4,7 +4,8 @@
       "WebFetch(domain:gemini.google.com)",
       "WebFetch(domain:claude.ai)",
       "WebFetch(domain:x.com)",
-      "WebFetch(domain:grok.com)"
+      "WebFetch(domain:grok.com)",
+      "Bash(del:*)"
     ],
     "deny": [],
     "ask": []

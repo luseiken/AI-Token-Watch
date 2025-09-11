@@ -74,6 +74,12 @@ class PlatformDetector {
     const pathname = window.location.pathname;
     const fullUrl = window.location.href;
 
+    // Early exit for non-conversation pages (OAuth, login, etc.)
+    if (this.isNonConversationPage(fullUrl, pathname)) {
+      console.log(`[PlatformDetector] Skipping non-conversation page: ${pathname}`);
+      return this.platforms.UNKNOWN;
+    }
+
     console.log(`[PlatformDetector] Detecting platform for: ${fullUrl}`);
 
     // Domain-based detection with more flexible matching
@@ -101,6 +107,19 @@ class PlatformDetector {
     console.log(`[PlatformDetector] No domain match found, trying DOM detection`);
     // Fallback: DOM-based detection
     return this.detectByDOM();
+  }
+
+  // Check if current page is a non-conversation page that should be skipped
+  isNonConversationPage(fullUrl, pathname) {
+    const skipPatterns = [
+      '/oauth/', '/auth/', '/login', '/signup', '/register',
+      '/callback', '/authorize', '/token', '/settings',
+      '/profile', '/billing', '/subscription', '/account'
+    ];
+    
+    return skipPatterns.some(pattern => 
+      pathname.includes(pattern) || fullUrl.includes(pattern)
+    );
   }
 
   detectByDOM() {

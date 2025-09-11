@@ -6,10 +6,10 @@ class AITokenWatch {
     this.settings = {
       enabled: true,
       includeCode: true,
-      warningThreshold: 80,
-      minRemainingTokens: 1000,
-      maxTokens: 8000, // Will be updated based on platform
-      updateInterval: 2000
+      warningThreshold: 80,        // Warning at 80% usage
+      minRemainingTokens: 1000,    // Alert when less than 1K tokens remain
+      maxTokens: 8000,             // Default limit, updated per platform
+      updateInterval: 2000         // Update every 2 seconds for real-time monitoring
     };
     this.currentTokens = 0;
     this.updateTimer = null;
@@ -29,15 +29,26 @@ class AITokenWatch {
     if (!platformInfo.isSupported) {
       const isKnownDisabled = platformInfo?.config && platformInfo.config.enabled === false;
       if (isKnownDisabled) {
-        // Known platform is explicitly disabled: do not show HUD/debug, exit quietly
-        console.warn(`[AITokenWatch] ${platformInfo.config?.name || platformInfo.platform} monitoring is disabled. Skipping initialization.`);
+        // Known platform is explicitly disabled: exit quietly
+        console.log(`[AITokenWatch] ${platformInfo.config?.name || platformInfo.platform} monitoring is disabled. Extension inactive on this page.`);
         return;
       }
-      // Unknown platforms: show debug HUD to assist troubleshooting
+      
+      // Check if this is a non-conversation page (OAuth, settings, etc.)
+      const isNonConversationPage = this.platformDetector.isNonConversationPage?.(
+        window.location.href, 
+        window.location.pathname
+      );
+      
+      if (isNonConversationPage) {
+        // Non-conversation page: exit silently without any messages
+        return;
+      }
+      
+      // Unknown platforms on potential conversation pages: show debug HUD
       console.log('[AITokenWatch] Creating debug HUD for unsupported platform');
       this.createDebugHUD(platformInfo);
-      console.log('[AITokenWatch] Current platform not supported, showing debug only');
-      console.log('[AITokenWatch] Debug info:', this.platformDetector.getDebugInfo());
+      console.log('[AITokenWatch] Platform not recognized, showing debug interface');
       return;
     }
 
@@ -80,7 +91,7 @@ class AITokenWatch {
       display: flex;
       align-items: center;
       justify-content: center;
-      z-index: 2147483647;
+      z-index: 2147483647; /* Maximum safe z-index for debug HUD */
       font-size: 9px;
       cursor: pointer;
       text-align: center;
@@ -408,18 +419,20 @@ Check console for detailed debug info.
     });
 
     // Check visibility periodically (useful for dynamic page changes)
+    const VISIBILITY_CHECK_INTERVAL_MS = 5000; // Check HUD visibility every 5 seconds
     setInterval(() => {
       this.ensureHUDVisibility();
-    }, 5000);
+    }, VISIBILITY_CHECK_INTERVAL_MS);
 
     // Initial visibility check
+    const INITIAL_CHECK_DELAY_MS = 1000; // Wait 1 second for DOM to stabilize
     setTimeout(() => {
       this.ensureHUDVisibility();
       if (this.debugMode) {
         this.enableDebugMode();
         this.logHUDDiagnostics();
       }
-    }, 1000);
+    }, INITIAL_CHECK_DELAY_MS);
 
     // Debug keyboard shortcut (Ctrl+Shift+D)
     document.addEventListener('keydown', (e) => {
@@ -477,7 +490,8 @@ Check console for detailed debug info.
   }
 
   showWarningNotification() {
-    if (this.lastWarningTime && Date.now() - this.lastWarningTime < 300000) {
+    const WARNING_COOLDOWN_MS = 300000; // 5 minutes cooldown between warnings
+    if (this.lastWarningTime && Date.now() - this.lastWarningTime < WARNING_COOLDOWN_MS) {
       return;
     }
     
@@ -548,6 +562,7 @@ Check console for detailed debug info.
     if (newUrl !== this.lastUrl) {
       this.lastUrl = newUrl;
       
+      const ROUTE_CHANGE_DELAY_MS = 1000; // Wait for SPA route to stabilize
       setTimeout(() => {
         this.currentTokens = 0;
         this.updateHUD();
@@ -558,12 +573,13 @@ Check console for detailed debug info.
           console.warn('[AITokenWatch] Route change re-init TokenEstimator failed', e);
         }
         this.startMonitoring();
-      }, 1000);
+      }, ROUTE_CHANGE_DELAY_MS);
     }
   }
 
   showCriticalWarningModal() {
-    if (this.lastCriticalWarning && Date.now() - this.lastCriticalWarning < 600000) {
+    const CRITICAL_WARNING_COOLDOWN_MS = 600000; // 10 minutes cooldown for critical warnings
+    if (this.lastCriticalWarning && Date.now() - this.lastCriticalWarning < CRITICAL_WARNING_COOLDOWN_MS) {
       return;
     }
     

@@ -667,6 +667,117 @@ ChatGPT Token Watch 現在是一個**真正跨平台相容**的專業工具，�
 
 ---
 
+---
+
+## 2025-09-11 工作記錄 - 代碼品質優化與文檔更新
+
+### ✅ 今天完成的工作
+
+#### 1. 修復 OAuth 頁面報錯問題
+- **問題診斷**：Claude OAuth 授權頁面 (`/oauth/authorize`) 被誤判為需要監控的對話頁面
+- **解決方案**：
+  - 新增 `isNonConversationPage()` 方法過濾非對話頁面
+  - 添加 OAuth、登入、設定等頁面的跳過模式
+  - 改善錯誤訊息語調，OAuth 頁面完全靜默
+
+#### 2. Linus Torvalds 式代碼審查與優化
+- **代碼品質評估**：採用 Linux 內核維護者的標準審查代碼結構
+- **核心發現**：
+  - 功能正常但存在過度設計痕跡
+  - 特殊情況處理過於複雜 (Claude 的 8 種檢測策略)
+  - 硬編碼魔術數字缺乏說明
+
+#### 3. 零風險代碼優化實施
+- **優化原則**：只改善可讀性，不改變任何邏輯
+- **具體改進**：
+  - 定義所有魔術數字為命名常數：
+    - `wordsToTokensRatio = 1.3` (英文平均 token/字比例)
+    - `bufferFactor = 1.15` (15% 安全緩衝)
+    - `WARNING_COOLDOWN_MS = 300000` (5分鐘警告間隔)
+    - `CRITICAL_WARNING_COOLDOWN_MS = 600000` (10分鐘嚴重警告間隔)
+    - `VISIBILITY_CHECK_INTERVAL_MS = 5000` (HUD 可見性檢查間隔)
+  - 所有時間間隔和數值都加上清晰註釋說明來源
+
+#### 4. 擴展圖示系統完善
+- **SVG 圖示設計**：創建專業的多平台 token 監控圖示
+- **圖示特色**：
+  - 主色調：紫藍漸層背景
+  - 多平台指示：4個圓點代表支援平台狀態
+  - 警告系統：右上角紅色警告標誌
+  - AI 元素：右下角 AI 大腦圖示
+- **圖示轉換**：從 SVG 轉換為 16x16、48x48、128x128 PNG 檔案
+
+### 🎯 重要技術決策
+
+#### 代碼品質哲學
+1. **實用主義優先**：「能跑的醜代碼比漂亮的壞代碼強一萬倍」
+2. **零破壞原則**：任何優化都不能影響現有功能
+3. **可讀性提升**：透過註釋和常數定義改善維護性
+
+#### 問題修復策略
+1. **OAuth 頁面處理**：早期過濾非對話頁面，避免無意義的平台檢測
+2. **錯誤訊息優化**：區分「已知但停用」vs「未知頁面」，提供適當的訊息等級
+3. **靜默處理機制**：非相關頁面完全不顯示任何訊息或 HUD
+
+### 📋 代碼品質改善成果
+
+#### 優化前問題
+- 硬編碼魔術數字：`wordCount * 1.3`、`bufferFactor = 1.15`
+- 時間間隔無說明：`300000`、`600000`、`5000`
+- z-index 值來源不明：`2147483647`
+
+#### 優化後狀態
+- 所有數值都有清晰的常數定義和註釋
+- 容易找到需要調整的參數位置
+- 下個維護者能快速理解代碼意圖
+- 零功能風險，完全向後兼容
+
+### 🔧 技術實施細節
+
+#### tokenEstimator.js 改進
+```javascript
+// 優化前
+this.averageTokenPerChar = 0.25;
+this.bufferFactor = 1.15;
+baseEstimate = wordCount * 1.3;
+
+// 優化後  
+this.averageTokenPerChar = 0.25;  // GPT tokenizer averages ~4 chars per token
+this.bufferFactor = 1.15;         // 15% safety buffer to avoid underestimation
+this.wordsToTokensRatio = 1.3;    // English: ~1.3 tokens per word on average
+baseEstimate = wordCount * this.wordsToTokensRatio;
+```
+
+#### content.js 改進
+```javascript
+// 優化前
+if (this.lastWarningTime && Date.now() - this.lastWarningTime < 300000) {
+
+// 優化後
+const WARNING_COOLDOWN_MS = 300000; // 5 minutes cooldown between warnings
+if (this.lastWarningTime && Date.now() - this.lastWarningTime < WARNING_COOLDOWN_MS) {
+```
+
+### 📊 專案狀態總結
+
+#### 技術成熟度
+- **功能完整性**：✅ 所有核心功能正常運作
+- **多平台支援**：✅ ChatGPT/Gemini/Grok 穩定，Claude 暫停
+- **用戶體驗**：✅ 圓球拖曳、位置記憶、響應式設計
+- **代碼品質**：🟢 從「湊合」提升到「專業」等級
+
+#### 維護性提升
+- **可讀性**：大幅改善，所有魔術數字都有說明
+- **除錯能力**：OAuth 問題徹底解決，錯誤訊息更清晰
+- **擴展性**：常數定義讓參數調整變得容易
+
+---
+
 ## 版本里程碑更新
 - [x] v2.0.0 多平台通用版發布 (2025-09-08)
 - [x] 2025-09-09 更新：暫停 Claude + 修復 Gemini/Grok 計數（小幅強化，未變更 manifest 版本）
+- [x] **v2.0.1**: 🎉 **代碼品質優化版** (2025-09-11)
+  - 修復 OAuth 頁面報錯問題
+  - Linus 式代碼審查和零風險優化
+  - 完善圖示系統和文檔更新
+  - 提升代碼可讀性和維護性

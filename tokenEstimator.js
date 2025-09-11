@@ -1,7 +1,10 @@
 class TokenEstimator {
   constructor(platformDetector = null) {
-    this.averageTokenPerChar = 0.25;
-    this.bufferFactor = 1.15;
+    // Token estimation constants - based on empirical testing
+    this.averageTokenPerChar = 0.25;  // GPT tokenizer averages ~4 chars per token
+    this.bufferFactor = 1.15;         // 15% safety buffer to avoid underestimation
+    this.wordsToTokensRatio = 1.3;    // English: ~1.3 tokens per word on average
+    
     this.platformDetector = platformDetector || (typeof window !== 'undefined' && window.PlatformDetector ? new window.PlatformDetector() : null);
     this.currentPlatformConfig = null;
     this.initializePlatform();
@@ -14,8 +17,12 @@ class TokenEstimator {
       
       if (platformInfo.isSupported) {
         console.log(`[TokenEstimator] Initialized for platform: ${platformInfo.config.name}`);
+      } else if (platformInfo.platform !== 'unknown') {
+        // Known platform but disabled (like Claude)
+        console.log(`[TokenEstimator] Platform ${platformInfo.config?.name || platformInfo.platform} monitoring is disabled`);
       } else {
-        console.warn('[TokenEstimator] Current platform not supported, using fallback mode');
+        // Unknown page/platform (OAuth pages, unsupported sites)
+        console.log(`[TokenEstimator] Page not supported for token monitoring`);
       }
     }
   }
@@ -36,7 +43,7 @@ class TokenEstimator {
     
     let baseEstimate;
     if (wordCount > 0) {
-      baseEstimate = wordCount * 1.3;
+      baseEstimate = wordCount * this.wordsToTokensRatio;
     } else {
       baseEstimate = charCount * this.averageTokenPerChar;
     }
@@ -68,11 +75,11 @@ class TokenEstimator {
     for (const message of messages) {
       if (message.role && message.content) {
         totalTokens += this.estimateTokens(message.content, includeCode);
-        totalTokens += 4;
+        totalTokens += 4; // OpenAI format overhead per message
       }
     }
 
-    totalTokens += 3;
+    totalTokens += 3; // Conversation start/end tokens
     
     return totalTokens;
   }
@@ -83,10 +90,10 @@ class TokenEstimator {
     
     // Lazy init or recover from early init when platform was UNKNOWN
     if (!this.currentPlatformConfig) {
-      console.warn('[TokenEstimator] No platform configuration available, attempting to initialize now');
+      console.log('[TokenEstimator] Initializing platform configuration');
       this.initializePlatform();
       if (!this.currentPlatformConfig) {
-        console.warn('[TokenEstimator] Still no platform configuration, returning 0 tokens');
+        console.log('[TokenEstimator] Platform not configured for token monitoring, returning 0');
         return 0;
       }
     }

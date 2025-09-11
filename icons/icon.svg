@@ -1,0 +1,64 @@
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle with gradient -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4F46E5;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#7C3AED;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="tokenGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#10B981;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#F59E0B;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#EF4444;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Main background -->
+  <circle cx="64" cy="64" r="58" fill="url(#bgGradient)" stroke="#1F2937" stroke-width="2"/>
+  
+  <!-- Token counter display -->
+  <rect x="20" y="45" width="88" height="38" rx="8" fill="#1F2937" stroke="#374151" stroke-width="1.5"/>
+  
+  <!-- Token progress bar -->
+  <rect x="24" y="49" width="80" height="6" rx="3" fill="#374151"/>
+  <rect x="24" y="49" width="48" height="6" rx="3" fill="url(#tokenGradient)"/>
+  
+  <!-- Token count text representation -->
+  <rect x="26" y="62" width="12" height="3" rx="1.5" fill="#9CA3AF"/>
+  <rect x="40" y="62" width="8" height="3" rx="1.5" fill="#9CA3AF"/>
+  <rect x="50" y="62" width="6" height="3" rx="1.5" fill="#9CA3AF"/>
+  <rect x="58" y="62" width="4" height="3" rx="1.5" fill="#6B7280"/>
+  <rect x="64" y="62" width="8" height="3" rx="1.5" fill="#9CA3AF"/>
+  <rect x="74" y="62" width="6" height="3" rx="1.5" fill="#9CA3AF"/>
+  <rect x="82" y="62" width="10" height="3" rx="1.5" fill="#9CA3AF"/>
+  
+  <rect x="26" y="68" width="8" height="3" rx="1.5" fill="#9CA3AF"/>
+  <rect x="36" y="68" width="12" height="3" rx="1.5" fill="#9CA3AF"/>
+  <rect x="50" y="68" width="6" height="3" rx="1.5" fill="#6B7280"/>
+  <rect x="58" y="68" width="4" height="3" rx="1.5" fill="#9CA3AF"/>
+  <rect x="64" y="68" width="14" height="3" rx="1.5" fill="#9CA3AF"/>
+  <rect x="80" y="68" width="8" height="3" rx="1.5" fill="#9CA3AF"/>
+  
+  <rect x="26" y="74" width="16" height="3" rx="1.5" fill="#9CA3AF"/>
+  <rect x="44" y="74" width="6" height="3" rx="1.5" fill="#9CA3AF"/>
+  <rect x="52" y="74" width="8" height="3" rx="1.5" fill="#6B7280"/>
+  <rect x="62" y="74" width="10" height="3" rx="1.5" fill="#9CA3AF"/>
+  <rect x="74" y="74" width="12" height="3" rx="1.5" fill="#9CA3AF"/>
+  
+  <!-- Multi-platform indicator dots -->
+  <circle cx="32" cy="96" r="3" fill="#10B981"/> <!-- ChatGPT - Green -->
+  <circle cx="45" cy="96" r="3" fill="#F59E0B"/> <!-- Gemini - Amber -->
+  <circle cx="58" cy="96" r="3" fill="#3B82F6"/> <!-- Grok - Blue -->
+  <circle cx="71" cy="96" r="3" fill="#6B7280" opacity="0.5"/> <!-- Claude - Disabled -->
+  
+  <!-- Warning indicator -->
+  <circle cx="96" cy="32" r="8" fill="#EF4444"/>
+  <path d="M92 28 L100 28 L96 36 Z" fill="#FFFFFF"/>
+  <circle cx="96" cy="30" r="1" fill="#FFFFFF"/>
+  
+  <!-- AI/Brain icon overlay -->
+  <circle cx="96" cy="96" r="12" fill="#1F2937" stroke="#4F46E5" stroke-width="2"/>
+  <path d="M90 94 Q96 88 102 94 Q96 100 90 94" fill="#4F46E5"/>
+  <circle cx="93" cy="93" r="1.5" fill="#FFFFFF"/>
+  <circle cx="99" cy="93" r="1.5" fill="#FFFFFF"/>
+  <path d="M94 97 Q96 99 98 97" stroke="#FFFFFF" stroke-width="1" fill="none"/>
+</svg>

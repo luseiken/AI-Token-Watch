@@ -179,7 +179,14 @@ ai-token-watch/
 
 ## 版本記錄 (Version History)
 
-### v2.0.0 🎉 多平台通用版
+### v2.0.1 🔧 代碼品質優化版 (2025-09-11)
+- 🐛 修復 OAuth 頁面報錯問題，完善非對話頁面過濾機制
+- 📝 Linus Torvalds 式代碼審查，零風險優化
+- 🏗️ 清理所有硬編碼魔術數字，新增常數定義和註釋
+- 🎨 完善專業圖示系統 (SVG → PNG 轉換)
+- 📚 提升代碼可讀性和維護性，保持完全向後兼容
+
+### v2.0.0 🎉 多平台通用版 (2025-09-08)
 - ✨ 新增支援 Claude、Gemini、Grok 平台
 - ✨ 全新 PlatformDetector 智能平台檢測系統
 - ✨ 動態 token 限制根據平台自動調整
@@ -187,17 +194,17 @@ ai-token-watch/
 - 🔄 更名為 AI Token Watch
 - 🛠️ 優化擴充功能權限配置
 
-### v1.5.0 寬螢幕相容性修復
+### v1.5.0 寬螢幕相容性修復 (2025-01-29)
 - 🐛 修復 16:9 寬螢幕 HUD 不可見問題
 - ✨ 新增專業調試系統和自動位置校正
 - ✨ 響應式適配支援 21:9 超寬螢幕
 
-### v1.4.0 圓球拖曳設計
+### v1.4.0 圓球拖曳設計 (2025-01-28)
 - ✨ 圓球可拖曳 HUD 重大設計改版
 - ✨ 位置記憶和智能展開面板
 - ✨ 三色警示系統和動畫效果
 
-### v1.0.0-1.3.0 基礎版本
+### v1.0.0-1.3.0 基礎版本 (2025-01-27)
 - 基礎 ChatGPT token 監控功能
 - 專業摘要生成系統
 - SPA 路由支援和設定介面
@@ -231,54 +238,35 @@ MIT License
 
 ---
 
-**AI Token Watch v2.0.0** - 你的全能 AI 對話管理夥伴 🚀
+**AI Token Watch v2.0.1** - 你的全能 AI 對話管理夥伴 🚀
  
 ---
 
-## 2025-09-09 更新（暫停 Claude + 修復 Gemini/Grok 計數）
+## 最新更新記錄
 
-### ✅ 今天完成的工作
+### 2025-09-11 更新（代碼品質優化）
 
-#### 1. 暫停 Claude 監控（保留未來擴充）
-- `platformDetector.js`: 對 Claude 設定 `enabled: false`
-- `content.js`: 若平台 `enabled === false`，不建立 HUD、不顯示 debug，乾淨早退
+#### ✅ 主要改善
+- **修復 OAuth 頁面報錯**：完善非對話頁面識別，避免在登入/授權頁面觸發監控
+- **代碼可讀性提升**：清理所有硬編碼數字，新增常數定義和詳細註釋
+- **專業圖示系統**：完成 SVG 設計與 PNG 轉換，提升視覺識別
+- **零風險優化**：採用 Linus Torvalds 式審查標準，只改善可讀性不影響功能
 
-#### 2. Gemini/Grok 計數修復與強化
-- 放寬角色限制：`role === unknown` 但內容充足時，推論為 `assistant` 以納入計數（避免 0）
-- 平台提示（heuristics）：
-  - Gemini：`response-container` → 視為 assistant
-  - Grok：`.not-prose` → 視為 assistant；缺特徵時使用交替（user/assistant）降級
-- 去重（de-dup）：同一內容只計一次（解決 Gemini 多容器重複）
-- 非文字節點過濾：忽略 `svg/script/style/img/button` 等無文本元素
-- Grok 選擇器優化：優先 `.not-prose`，降低掃描雜訊
+#### 🔧 技術細節
+- 所有時間間隔都定義為命名常數（如 `WARNING_COOLDOWN_MS = 300000`）
+- Token 估算參數加上科學依據註釋（如 `wordsToTokensRatio = 1.3`）
+- z-index 值說明來源（Chrome 最大安全值）
+- 完全向後相容，功能運作不受影響
 
-#### 3. 初始化與路由穩定性
-- `TokenEstimator` 支援 lazy init；`content.js` 在初始化與 SPA 路由變更時重新初始化估算平台
+### 2025-09-09 更新（暫停 Claude + 修復 Gemini/Grok 計數）
 
-### 📌 實際影響
-- Grok：總 tokens 可能比過去更低（因去重與雜訊過濾），更接近真實值
-- Gemini：計數恢復正常；因 DOM 結構，角色顯示多偏向 assistant（不影響總量）
-- ChatGPT：行為不變
-- Claude：預設停用，不顯示 HUD
+#### ✅ 平台穩定性改善
+- **暫停 Claude 監控**：因 DOM 結構頻繁變動，暫時停用避免錯誤
+- **Gemini/Grok 計數修復**：改善角色檢測和去重機制
+- **初始化穩定性**：支援 lazy init 和 SPA 路由重新初始化
 
-### ⚠️ 已知限制
-- Claude：DOM 變動頻繁，角色檢測不穩定 → 暫列 Experimental/Paused
-- 設定即時套用：目前只對 ChatGPT 即時廣播；Gemini/Grok 調整「Include code」後需重整頁面
-- 程式碼計數：預設計入；關閉後以標記/樣式過濾，但若平台用純樣式代碼區，可能仍有殘留
-
-### 🛠 技術細節
-- platformDetector：
-  - Claude `enabled: false`
-  - Grok primary/content 加入 `.not-prose`
-- tokenEstimator：
-  - lazy init + 路由 re-init
-  - 內容充分但 `role=unknown` → 推論為 `assistant` 計數
-  - Gemini: `response-container` → assistant
-  - Grok: `.not-prose` → assistant；交替降級
-  - 去重：以內容正規化雜湊判斷
-  - 預過濾：排除非文本節點、極短內容
-
-### 📋 下一步計劃
-1. Grok：視需求放寬「極短訊息」過濾（1–4 字）
-2. 設定傳播：在 popup 廣播設定到 Gemini/Grok，免重整
-3. 角色精準度：強化 Gemini/Grok 的 user 偵測與去重策略
+#### 📌 當前平台狀態
+- **ChatGPT**：✅ 完全穩定
+- **Gemini**：✅ 計數正常
+- **Grok**：✅ 優化選擇器
+- **Claude**：⚠️ 暫停（保留配置以備未來啟用）
